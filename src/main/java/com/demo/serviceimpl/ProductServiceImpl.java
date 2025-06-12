@@ -24,9 +24,9 @@ public class ProductServiceImpl implements ProductService {
         product.setPrice(productDTO.getPrice());
         product.setCatagory(productDTO.getCatagory());
         product.setUnit(productDTO.getUnit());
-        System.out.println(product.getProduct_id());
+        System.out.println(product.getProductId());
         Product savedProduct=productRepository.save(product);
-        if(savedProduct.getProduct_id()>1){
+        if(savedProduct.getProductId()>1){
             System.out.println("Inside IF");
         }
         return productDTO;
@@ -54,11 +54,54 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDTO getProductByID(long id) {
-       Optional<Product> products= Optional.of(productRepository.getReferenceById(id));
-        return products.map(product -> new ProductDTO(product.getName(),
+        Optional<Product> prod=productRepository.findByProductId(id);
+        return prod.map(product -> new ProductDTO(product.getName(),
                 product.getDiscription(),
                 product.getPrice(),
                 product.getCatagory(),
                 product.getUnit())).orElse(null);
     }
+
+    @Override
+    public ProductDTO updateProduct(long id, ProductDTO productDTO) {
+        Optional<Product> prod=productRepository.findByProductId(id);
+        if (prod.isEmpty()) {
+       return null;
+        }
+        Product product=prod.get();
+        if (productDTO.getName() != null && !productDTO.getName().isBlank()) {
+            product.setName(productDTO.getName());
+        } else  product.setName(prod.get().getName());
+
+        if (productDTO.getCatagory() != null && !productDTO.getCatagory().isBlank()) {
+            product.setCatagory(productDTO.getCatagory());
+        } else product.setCatagory(prod.get().getCatagory());
+
+        if (productDTO.getDiscription() != null && !productDTO.getDiscription().isBlank()) {
+            product.setDiscription(productDTO.getDiscription());
+        } else product.setDiscription(prod.get().getDiscription());
+
+        if (productDTO.getUnit() != null && !productDTO.getUnit().isBlank()) {
+            product.setUnit(productDTO.getUnit());
+        } else product.setUnit(prod.get().getUnit());
+
+        if (productDTO.getPrice() > 0.0) {
+            product.setPrice(productDTO.getPrice());
+        } else product.setPrice(prod.get().getPrice());
+
+        Product updated=  productRepository.save(product);
+        ProductDTO response = new ProductDTO();
+        response.setName(updated.getName());
+        response.setDiscription(updated.getDiscription());
+        response.setCatagory(updated.getCatagory());
+        response.setUnit(updated.getUnit());
+        response.setPrice(updated.getPrice());
+            return response;
+        }
+
+    @Override
+    public void deleteProduct(long id) {
+        productRepository.deleteById(id);
+    }
+
 }
