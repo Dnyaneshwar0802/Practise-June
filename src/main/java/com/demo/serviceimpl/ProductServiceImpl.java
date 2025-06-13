@@ -1,6 +1,8 @@
 package com.demo.serviceimpl;
 
 import com.demo.dto.ProductDTO;
+import com.demo.exception.ProductNotFoundException;
+import com.demo.exception.ProductDeletionException;
 import com.demo.model.Product;
 import com.demo.repository.ProductRepository;
 import com.demo.service.ProductService;
@@ -18,91 +20,95 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDTO saveProduct(ProductDTO productDTO) {
-        Product product=new Product();
+        Product product = new Product();
         product.setName(productDTO.getName());
         product.setDiscription(productDTO.getDiscription());
         product.setPrice(productDTO.getPrice());
         product.setCatagory(productDTO.getCatagory());
         product.setUnit(productDTO.getUnit());
-        System.out.println(product.getProductId());
-        Product savedProduct=productRepository.save(product);
-        if(savedProduct.getProductId()>1){
-            System.out.println("Inside IF");
-            System.out.println("This is after product is saved>>>"+savedProduct);
-        }
-        return productDTO;
+
+        Product savedProduct = productRepository.save(product);
+
+        ProductDTO savedDTO = new ProductDTO();
+        savedDTO.setName(savedProduct.getName());
+        savedDTO.setDiscription(savedProduct.getDiscription());
+        savedDTO.setPrice(savedProduct.getPrice());
+        savedDTO.setCatagory(savedProduct.getCatagory());
+        savedDTO.setUnit(savedProduct.getUnit());
+        return savedDTO;
     }
 
     @Override
     public List<ProductDTO> getAll() {
-    List<Product> products=productRepository.findAll();
-    List<ProductDTO> productDTOS=new ArrayList<ProductDTO>();
-        System.out.println("FETCHING DATA FROM  DATABASE ");
-        System.out.println(products);
-    if(!products.isEmpty()){
-      for(int i=0;i<products.size();i++){
-          productDTOS.add(new ProductDTO(products.get(i).getName(),
-                  products.get(i).getDiscription(),
-                  products.get(i).getPrice(),
-                  products.get(i).getCatagory(),
-                  products.get(i).getUnit()));
-      }
-      return productDTOS;
-           //productDTOS.add(product);
-    }
-        return List.of();
+        List<Product> products = productRepository.findAll();
+        List<ProductDTO> productDTOS = new ArrayList<>();
+
+        for (Product p : products) {
+            ProductDTO dto = new ProductDTO();
+            dto.setName(p.getName());
+            dto.setDiscription(p.getDiscription());
+            dto.setPrice(p.getPrice());
+            dto.setCatagory(p.getCatagory());
+            dto.setUnit(p.getUnit());
+            productDTOS.add(dto);
+        }
+        return productDTOS;
     }
 
     @Override
     public ProductDTO getProductByID(long id) {
-        Optional<Product> prod=productRepository.findByProductId(id);
-        return prod.map(product -> new ProductDTO(product.getName(),
-                product.getDiscription(),
-                product.getPrice(),
-                product.getCatagory(),
-                product.getUnit())).orElse(null);
+        Product product = productRepository.findByProductId(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product with ID " + id + " not found"));
+        ProductDTO dto = new ProductDTO();
+        dto.setName(product.getName());
+        dto.setDiscription(product.getDiscription());
+        dto.setPrice(product.getPrice());
+        dto.setCatagory(product.getCatagory());
+        dto.setUnit(product.getUnit());
+        return dto;
     }
 
     @Override
     public ProductDTO updateProduct(long id, ProductDTO productDTO) {
-        Optional<Product> prod=productRepository.findByProductId(id);
-        if (prod.isEmpty()) {
-       return null;
-        }
-        Product product=prod.get();
+        Product product = productRepository.findByProductId(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product with ID " + id + " not found"));
+
         if (productDTO.getName() != null && !productDTO.getName().isBlank()) {
             product.setName(productDTO.getName());
-        } else  product.setName(prod.get().getName());
+        }
 
         if (productDTO.getCatagory() != null && !productDTO.getCatagory().isBlank()) {
             product.setCatagory(productDTO.getCatagory());
-        } else product.setCatagory(prod.get().getCatagory());
+        }
 
         if (productDTO.getDiscription() != null && !productDTO.getDiscription().isBlank()) {
             product.setDiscription(productDTO.getDiscription());
-        } else product.setDiscription(prod.get().getDiscription());
+        }
 
         if (productDTO.getUnit() != null && !productDTO.getUnit().isBlank()) {
             product.setUnit(productDTO.getUnit());
-        } else product.setUnit(prod.get().getUnit());
+        }
 
         if (productDTO.getPrice() > 0.0) {
             product.setPrice(productDTO.getPrice());
-        } else product.setPrice(prod.get().getPrice());
+        }
 
-        Product updated=  productRepository.save(product);
+        Product updated = productRepository.save(product);
         ProductDTO response = new ProductDTO();
         response.setName(updated.getName());
         response.setDiscription(updated.getDiscription());
         response.setCatagory(updated.getCatagory());
         response.setUnit(updated.getUnit());
         response.setPrice(updated.getPrice());
-            return response;
-        }
+
+        return response;
+    }
 
     @Override
     public void deleteProduct(long id) {
+        if (!productRepository.existsById(id)) {
+            throw new ProductDeletionException("Product with ID " + id + " cannot be deleted because it does not exist");
+        }
         productRepository.deleteById(id);
     }
-
 }
