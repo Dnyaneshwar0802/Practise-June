@@ -14,39 +14,38 @@ import java.util.List;
 @RestController
 @RequestMapping("/products")
 public class ProductRestController {
+
     @Autowired
     private ProductService productService;
-    @PostMapping("/saveProduct")
-    public ResponseEntity<ProductDTO> saveProduct(@Valid @RequestBody ProductDTO productDTO){
-        System.out.println("This input from user>>"+productDTO);
-        if(productDTO == null){
-            return ResponseEntity.status(HttpStatusCode.valueOf(501)).build();
-        }
-        ProductDTO savedProductDTO=productService.saveProduct(productDTO);
-        System.out.println("Returned ID >>"+savedProductDTO);
-        if(savedProductDTO==null){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
-        return new ResponseEntity<>(savedProductDTO, HttpStatus.CREATED);
-               // productService.saveProduct(productDTO);
-    }
-    @GetMapping("/getAllProducts")
-    public List<ProductDTO> getAllProduct(){
-        return productService.getAll();
-    }
-    @GetMapping("/getProductByID/{id}")
-    public ProductDTO getProductByID(@PathVariable ("id") long id){
-        System.out.println("Entered ID is "+id);
-        return productService.getProductByID(id);
 
+    @PostMapping("/saveProduct")
+    public ResponseEntity<ProductDTO> saveProduct(@Valid @RequestBody ProductDTO productDTO) {
+        ProductDTO savedProductDTO = productService.saveProduct(productDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedProductDTO);
     }
+
+    @GetMapping("/getAllProducts")
+    public ResponseEntity<List<ProductDTO>> getAllProduct() {
+        List<ProductDTO> products = productService.getAll();
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/getProductByID/{id}")
+    public ResponseEntity<ProductDTO> getProductByID(@PathVariable("id") long id) {
+        ProductDTO product = productService.getProductByID(id);
+        return ResponseEntity.ok(product);
+    }
+
     @PutMapping("/updateProduct/{id}")
-    public ProductDTO updateByID(@PathVariable ("id") long id,@RequestBody ProductDTO productDTO){
-        return productService.updateProduct(id,productDTO);
+    public ResponseEntity<ProductDTO> updateByID(@PathVariable("id") long id,
+                                                 @RequestBody ProductDTO productDTO) {
+        ProductDTO updated = productService.updateProduct(id, productDTO);
+        return ResponseEntity.ok(updated);
     }
+
     @DeleteMapping("/deleteProduct/{id}")
-    public  ResponseEntity<Object> deleteProduct(@PathVariable ("id") long id){
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") long id) {
         productService.deleteProduct(id);
-        return (ResponseEntity) ResponseEntity.status(204);
+        return ResponseEntity.noContent().build(); // HTTP 204
     }
 }

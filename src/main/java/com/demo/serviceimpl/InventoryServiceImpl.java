@@ -1,5 +1,6 @@
 package com.demo.serviceimpl;
 
+import com.demo.exception.InventoryNotFoundException;
 import com.demo.model.Inventory;
 import com.demo.model.Product;
 import com.demo.repository.InventoryRepository;
@@ -9,26 +10,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
     @Autowired
     private InventoryRepository inventoryRepository;
+
     @Autowired
-    ProductRepository productRepository;
+    private ProductRepository productRepository;
 
     @Override
     public Inventory saveQuantity(Inventory entity) {
-//Not working cause need to fetch product first
-      /* Optional<Inventory> inventory= inventoryRepository.findById(entity.getProductId());
-       if(inventory.isPresent()){
-           inventory.get().setAvailableQuantity(entity.getAvailableQuantity());
-           inventory.get().setLastUpdated(entity.getLastUpdated());
-           return inventoryRepository.save(inventory.get());
-       }
-        return inventoryRepository.save(entity);*/
         Optional<Inventory> optional = inventoryRepository.findById(entity.getProductId());
 
         if (optional.isPresent()) {
@@ -39,20 +32,16 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         Product product = productRepository.findById(entity.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new InventoryNotFoundException("Product not found to link inventory"));
 
-        Inventory newInventory = new Inventory();
-        newInventory.setProduct(product);
-        newInventory.setAvailableQuantity(entity.getAvailableQuantity());
-        newInventory.setLastUpdated(entity.getLastUpdated());
-
-        return inventoryRepository.save(newInventory);
+        entity.setProduct(product);
+        return inventoryRepository.save(entity);
     }
 
     @Override
     public Inventory updateQuantity(Long productId, long newQuantity) {
         Inventory inventory = inventoryRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Inventory not found for product ID: " + productId));
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product ID " + productId));
 
         inventory.setAvailableQuantity(newQuantity);
         inventory.setLastUpdated(LocalDateTime.now());
@@ -61,7 +50,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public List<Inventory> getAll() {
+    public java.util.List<Inventory> getAll() {
         return inventoryRepository.findAll();
     }
 }
