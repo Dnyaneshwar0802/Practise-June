@@ -23,6 +23,7 @@ public class ProductRestController {
             return ResponseEntity.status(HttpStatusCode.valueOf(501)).build();
         }
         ProductDTO savedProductDTO=productService.saveProduct(productDTO);
+        System.out.println("Returned ID >>"+savedProductDTO);
         if(savedProductDTO==null){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }

@@ -28,6 +28,7 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct=productRepository.save(product);
         if(savedProduct.getProductId()>1){
             System.out.println("Inside IF");
+            System.out.println("This is after product is saved>>>"+savedProduct);
         }
         return productDTO;
     }
